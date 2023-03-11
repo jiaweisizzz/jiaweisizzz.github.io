@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  
+    
+  <title>主流的golang clickhouse客户端写入性能测试 | JARVIS是只喵</title>
+  <meta name="author" content="jarvis">
+  <meta name="description" content="clickhouse 性能对比">
+  <meta name="keywords" content="ck ,clickhouse">
+
+  <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="主流的golang clickhouse客户端写入性能测试"/>
+<meta name="twitter:description" content="clickhouse 性能对比"/>
+
+  <meta property="og:title" content="主流的golang clickhouse客户端写入性能测试" />
+<meta property="og:description" content="clickhouse 性能对比" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jiaweisizzz.github.io/posts/go_clickhouse%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-03-10T00:00:00+00:00" />
+<meta property="article:modified_time" content="2023-03-10T00:00:00+00:00" />
+
+  <link rel="stylesheet" href="/css/bootstrap.min.css"  crossorigin="anonymous">
+  
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.1/css/all.min.css" rel="stylesheet" type="text/css">
+
+  <link rel="stylesheet" href="/sass/main.css">
+
+  <link rel="stylesheet" href="/zoomjs/zoom.min.css">
+
+  <script src=/js/lazysizes.min.js></script>
+
+  
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  
+
+</head>
+
+
+
+<body ontouchstart="">
+  <nav class="navbar navbar-default navbar-custom navbar-fixed-top invert">
+  <div class="container-fluid">
+    
+    <div class="navbar-header page-scroll">
+      <button type="button" class="navbar-toggle">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="https://jiaweisizzz.github.io">JARVIS是只喵</a>
+    </div>
+    
+    <div id="huxblog_navbar">
+      <div class="navbar-collapse">
+        <ul class="nav navbar-nav navbar-right">
+          
+          <li><a href="/" title="Home">Home</a></li>
+          
+          <li><a href="/archive/" title="Archive">Archive</a></li>
+          
+          <li><a href="/tags/" title="Tags">Tags</a></li>
+          
+          <li><a href="/about/" title="About">About</a></li>
+          
+          <li><a href="https://github.com/roninro/hugo-theme-puppet/" title="Github">Github</a></li>
+          
+          <li><a href="" title=""></a></li>
+          
+
+          <li class="search-icon">
+            <a href="javascript:void(0)">
+              <i class="fa fa-search"></i>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+  </div>
+  
+</nav>
+<script>
+  
+  
+  
+  var $body = document.body;
+  var $toggle = document.querySelector(".navbar-toggle");
+  var $navbar = document.querySelector("#huxblog_navbar");
+  var $collapse = document.querySelector(".navbar-collapse");
+
+  var __HuxNav__ = {
+    close: function () {
+      $navbar.className = " ";
+      
+      setTimeout(function () {
+        
+        if ($navbar.className.indexOf("in") < 0) {
+          $collapse.style.height = "0px";
+        }
+      }, 400);
+    },
+    open: function () {
+      $collapse.style.height = "auto";
+      $navbar.className += " in";
+    },
+  };
+
+  
+  $toggle.addEventListener("click", function (e) {
+    if ($navbar.className.indexOf("in") > 0) {
+      __HuxNav__.close();
+    } else {
+      __HuxNav__.open();
+    }
+  });
+
+  
+
+  document.addEventListener("click", function (e) {
+    if (e.target == $toggle) return;
+    if (e.target.className == "icon-bar") return;
+    __HuxNav__.close();
+  });
+</script>
+  
+<div class="search-page">
+  <div class="search-icon-close-container">
+    <span class="search-icon-close">
+      <i class="fa fa-chevron-down"></i>
+    </span>
+  </div>
+  <div class="search-main container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <form></form>
+        <input type="text" id="search-input" placeholder="$ grep...">
+        </form>
+        <div id="search-results" class="mini-post-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  
+  
+
+
+<style type="text/css">
+  header.intro-header {
+    position: relative;
+    background-image: url('');
+  }
+</style>
+
+<header class="intro-header style-text">
+
+  <div class="header-mask"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <div class="post-heading">
+          <div class="tags">
+            
+            <a class="tag" href="/tags/golang/" title="golang">golang</a>
+            
+            <a class="tag" href="/tags/clickhouse/" title="clickhouse">clickhouse</a>
+            
+          </div>
+          <h1>主流的golang clickhouse客户端写入性能测试</h1>
+          <h2 class="subheading"></h2>
+          <span class="meta">
+            Posted by  jarvis 
+            on Fri, Mar 10, 2023
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+
+  
+
+
+<article>
+  <div class="container">
+    <div class="row">
+
+      
+      <div class="
+              col-lg-8 col-lg-offset-2
+              col-md-10 col-md-offset-1
+              post-container">
+        <h1 id="主流的golang-clickhouse客户端写入性能测试">主流的golang clickhouse客户端写入性能测试<a class="anchorjs-link" href="#%e4%b8%bb%e6%b5%81%e7%9a%84golang-clickhouse%e5%ae%a2%e6%88%b7%e7%ab%af%e5%86%99%e5%85%a5%e6%80%a7%e8%83%bd%e6%b5%8b%e8%af%95"></a></h1><p>Clickhouse(以下简称ck)是战斗民族Yandex公司在2016年开源的专为在线数据分析而设计的高性能列式存储数据库，感兴趣的同学可以去ck官网学习一下。
+由于在项目中的使用，需要支撑大流量下的ck写入，所以最近几天测试了一下使用go客户端的ck写入性能，主流的ck客户端有以下几种：</p>
+<ul>
+<li>clickhouse-go</li>
+<li>ch-go</li>
+<li>database/sql</li>
+<li>sqlx</li>
+<li>gorm</li>
+</ul>
+<p>Clickhouse官方推荐了两种客户端，分别是clickhouse-go和ch-go，clickhouse-go是更高级别的api，但是选择哪种需要根据使用的模式和对性能的需求，对于每秒百万级别的插入，更推荐使用ch-go，对于低吞吐量和专注于数据分析来说，推荐使用前者。以下是ck官方文档中的一段话，可以参考一下。</p>
+<blockquote>
+<p>Selecting a client library depends on your usage patterns and need for optimal performance. For insert heavy use cases, where millions of inserts are required per second, we recommend using the low level client <a href="https://github.com/ClickHouse/ch-go" target="_blank">ch-go</a>. This client avoids the associated overhead of pivoting the data from a row-orientated format to columns, as the ClickHouse native format requires. Furthermore, it avoids any reflection or use of the <code>interface{}</code> (<code>any</code>) type to simplify usage.</p>
+<p>For query workloads focused on aggregations or lower throughput insert workloads, the <a href="https://github.com/ClickHouse/clickhouse-go" target="_blank">clickhouse-go</a> provides a familiar <code>database/sql</code> interface and more straightforward row semantics. Users can also optionally use HTTP for the transport protocol and take advantage of helper functions to marshal rows to and from structs.</p>
+</blockquote>
+<p>但开发不能单凭文档推荐，要根据实际情况，做性能测试之后，根据测试结果选择最优的方案。在做测试的过程中，笔者所用的go版本为1.19.6，因为clickhouse-go对go版本有要求：</p>
+<table>
+<thead>
+<tr>
+<th>Client Version</th>
+<th>Golang Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>=&gt; 2.0 &lt;= 2.2</td>
+<td>1.17, 1.18</td>
+</tr>
+<tr>
+<td>&gt;= 2.3</td>
+<td>1.18.4+, 1.19</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="性能测试">性能测试<a class="anchorjs-link" href="#%e6%80%a7%e8%83%bd%e6%b5%8b%e8%af%95"></a></h2><p>所有的测试都是用的同一个数据样本，单条数据1460字节大约1.4KB，数据库表字段689个，写入字段32个，每次最少写入80000条数据，因为ck官方说为了保证写入的性能，1KB左右的数据在5w-20w/s，不过写入的性能跟很多因素都挂钩，比如字段的多少，连接模式等等。用的测试机器是Linux系统，48核。测试结果我们用Grafana和Prometheus来监控。我们通过命令行参数的方式来来控制连接、数据量和协程数量等。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>	host = flag.<span style="color:#50fa7b">String</span>(<span style="color:#f1fa8c">&#34;host&#34;</span>, <span style="color:#f1fa8c">&#34;locakhouse:9000&#34;</span>, <span style="color:#f1fa8c">&#34;clickhouse host&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>	user = flag.<span style="color:#50fa7b">String</span>(<span style="color:#f1fa8c">&#34;user&#34;</span>, <span style="color:#f1fa8c">&#34;root&#34;</span>, <span style="color:#f1fa8c">&#34;clichouse user&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>	pass = flag.<span style="color:#50fa7b">String</span>(<span style="color:#f1fa8c">&#34;password&#34;</span>, <span style="color:#f1fa8c">&#34;123456&#34;</span>, <span style="color:#f1fa8c">&#34;clickhouse password&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>	db = flag.<span style="color:#50fa7b">String</span>(<span style="color:#f1fa8c">&#34;db&#34;</span>, <span style="color:#f1fa8c">&#34;test&#34;</span>, <span style="color:#f1fa8c">&#34;clickhouse database&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>	g = flag.<span style="color:#50fa7b">Int</span>(<span style="color:#f1fa8c">&#34;g&#34;</span>, <span style="color:#bd93f9">1</span>, <span style="color:#f1fa8c">&#34;write goroutine&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>	batch = flag.<span style="color:#50fa7b">Int</span>(<span style="color:#f1fa8c">&#34;batch&#34;</span>, <span style="color:#bd93f9">100000</span>, <span style="color:#f1fa8c">&#34;clickhouse batch&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>	tb = flag.<span style="color:#50fa7b">String</span>(<span style="color:#f1fa8c">&#34;tb&#34;</span>, <span style="color:#f1fa8c">&#34;event&#34;</span>, <span style="color:#f1fa8c">&#34;clickhouse table&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>	debug = flag.<span style="color:#50fa7b">Bool</span>(<span style="color:#f1fa8c">&#34;debug&#34;</span>, <span style="color:#ff79c6">false</span>, <span style="color:#f1fa8c">&#34;clickhouse debug&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>	flag.<span style="color:#50fa7b">Parse</span>()
+</span></span></code></pre></div><h3 id="clickhouse-gohttpsgithubcomclickhouseclickhouse-go"><a href="https://github.com/ClickHouse/clickhouse-go" target="_blank">Clickhouse-go</a><a class="anchorjs-link" href="#clickhouse-gohttpsgithubcomclickhouseclickhouse-go"></a></h3><p>clickhouse-go有两个版本v1和v2，从官方benchmark结果来看，v2版本的性能要比v1版本的性能好，本着用新不用旧的原则😄，我们直接用v2版本的开始测试。有两种批量写入方式，一种是本机的api，一种是通过字段映射批量写入，我们先来看第一种方式。</p>
+<h4 id="write-by-clickhouse-api">Write by clickhouse api<a class="anchorjs-link" href="#write-by-clickhouse-api"></a></h4><p>首先需要建立连接，然后根据命令行参数启动写入的协程：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>	conn, err <span style="color:#ff79c6">:=</span> clickhouse.<span style="color:#50fa7b">Open</span>(<span style="color:#ff79c6">&amp;</span>clickhouse.Options{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>		Addr: []<span style="color:#8be9fd">string</span>{<span style="color:#ff79c6">*</span>host},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>		Auth: clickhouse.Auth{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>			Database: <span style="color:#ff79c6">*</span>db,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>			Username: <span style="color:#ff79c6">*</span>user,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>			Password: <span style="color:#ff79c6">*</span>pass,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>		},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>		Settings: clickhouse.Settings{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>			<span style="color:#f1fa8c">&#34;max_execution_time&#34;</span>: <span style="color:#bd93f9">60</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>		},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>		MaxOpenConns: <span style="color:#bd93f9">50</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>		MaxIdleConns: <span style="color:#bd93f9">10</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>		DialTimeout:  <span style="color:#bd93f9">5</span> <span style="color:#ff79c6">*</span> time.Second,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>		Debug:        <span style="color:#ff79c6">*</span>debug,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>	})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>	<span style="color:#ff79c6">if</span> err <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>		<span style="color:#8be9fd;font-style:italic">panic</span>(<span style="color:#50fa7b">any</span>(err))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>	<span style="color:#ff79c6">if</span> err <span style="color:#ff79c6">:=</span> conn.<span style="color:#50fa7b">Ping</span>(context.<span style="color:#50fa7b">Background</span>()); err <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>		<span style="color:#8be9fd;font-style:italic">panic</span>(<span style="color:#50fa7b">any</span>(err))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>	<span style="color:#ff79c6">for</span> i<span style="color:#ff79c6">:=</span><span style="color:#bd93f9">0</span>; i&lt;<span style="color:#ff79c6">*</span>g; i<span style="color:#ff79c6">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>		<span style="color:#ff79c6">go</span> <span style="color:#8be9fd;font-style:italic">func</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>			<span style="color:#ff79c6">for</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>				<span style="color:#50fa7b">insert</span>(conn, <span style="color:#ff79c6">*</span>batch)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>			}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>		}()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>	}
+</span></span></code></pre></div><p>写入的过程也比较简单，首先需要解析我们的插入语句得到一个batch，然后将这一批的数据追加到batch中，最后通过Send方法将数据写入到ck，总体来说真正的写入是在Send中实现的，在此之前的操作都会放到内存中处理。最后通过整体用时跟数据量计算得出一个速率。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">insert</span>(conn driver.Conn, batch <span style="color:#8be9fd">int</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>	start <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>	ctx <span style="color:#ff79c6">:=</span> context.<span style="color:#50fa7b">Background</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>	bt, err <span style="color:#ff79c6">:=</span> conn.<span style="color:#50fa7b">PrepareBatch</span>(ctx, data.InsertSql)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>	<span style="color:#ff79c6">if</span> err <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>		log.<span style="color:#50fa7b">Fatal</span>(err)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>	s <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>	<span style="color:#ff79c6">for</span> i <span style="color:#ff79c6">:=</span> <span style="color:#bd93f9">0</span>; i &lt; batch; i<span style="color:#ff79c6">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>		err <span style="color:#ff79c6">:=</span> bt.<span style="color:#50fa7b">Append</span>(data.InsertData.Ccollectorip, data.InsertData.Cdevip, data.InsertData.Cdevtype, data.InsertData.Cdstip, data.InsertData.Ceventmsg,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>			data.InsertData.Ceventname, data.InsertData.Ceventtype, data.InsertData.Cflowdir, data.InsertData.Cobject, data.InsertData.Coperation,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>			data.InsertData.Csrcip, data.InsertData.Csrclogtype, data.InsertData.LogypeTag, data.InsertData.Manufacturer, data.InsertData.Reason,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>			data.InsertData.Iappprotocol, data.InsertData.Icollecttype, data.InsertData.Idstport, data.InsertData.Ieventlevel, data.InsertData.Imergecount,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>			data.InsertData.Iprotocol, data.InsertData.Isrcport, data.InsertData.Lduration, data.InsertData.Lrecivepack, data.InsertData.Lsendpack,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>			data.InsertData.RequestBodyLen, data.InsertData.ResponseBodyLen, data.InsertData.Lendtime, data.InsertData.Lid, time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e9</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>			data.InsertData.Lrecepttime, data.InsertData.Lstartime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>		<span style="color:#ff79c6">if</span> err <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>			log.<span style="color:#50fa7b">Fatal</span>(err)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>		}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>	e <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>	bt.<span style="color:#50fa7b">Send</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>	end <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>	fmt.<span style="color:#50fa7b">Printf</span>(<span style="color:#f1fa8c">&#34;记录数: %d, 耗时: %d, 循环准备耗时: %d, 速率: %d(条/秒) \n&#34;</span>, batch, (end<span style="color:#ff79c6">-</span>start)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, (e<span style="color:#ff79c6">-</span>s)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, <span style="color:#8be9fd;font-style:italic">int64</span>(batch<span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000000</span><span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000</span>)<span style="color:#ff79c6">/</span>(end<span style="color:#ff79c6">-</span>start))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>}
+</span></span></code></pre></div><p>测试结果：</p>
+<p>![image-20230310150030541](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310150030541.png)</p>
+<p>从打印结果来看差不多速率在6w-7w/s之间，再来看一下grafana也是平均6.5w/s左右。</p>
+<p>![image-20230310150053893](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310150053893.png)</p>
+<p>最终结果：单线程下，clickhouse-go的写入速率在6w/s。</p>
+<h4 id="write-by-column">Write by column<a class="anchorjs-link" href="#write-by-column"></a></h4><p>连接跟之前都是一样的，写入的处理略有区别，需要预先定义插入字段的类型，我们提前将数据放到定义好的字段中。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">var</span> (
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>	ccollectorip, cdevip, cdevtype, cdstip, ceventmsg, ceventname, ceventtype, cflowdir, cobject, coperation, csrcip, csrclogtype,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>	logtype_tag, manufacturer, reason []<span style="color:#8be9fd">string</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>	iappprotocol, icollecttype, idstport, ieventlevel, imergecount, iprotocol, isrcport                                       []<span style="color:#8be9fd">int32</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>	lduration, lrecivepack, lsendpack, request_body_len, response_body_len, lendtime, lid, loccurtime, lrecepttime, lstartime []<span style="color:#8be9fd">int64</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#ff79c6">for</span> i <span style="color:#ff79c6">:=</span> <span style="color:#bd93f9">0</span>; i &lt; <span style="color:#ff79c6">*</span>batch; i<span style="color:#ff79c6">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>		ccollectorip = <span style="color:#8be9fd;font-style:italic">append</span>(ccollectorip, data.InsertData.Ccollectorip)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>		cdevip = <span style="color:#8be9fd;font-style:italic">append</span>(cdevip, data.InsertData.Cdevip)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>		cdevtype = <span style="color:#8be9fd;font-style:italic">append</span>(cdevtype, data.InsertData.Cdevtype)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>		cdstip = <span style="color:#8be9fd;font-style:italic">append</span>(cdstip, data.InsertData.Cdstip)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>		ceventmsg = <span style="color:#8be9fd;font-style:italic">append</span>(ceventmsg, data.InsertData.Ceventmsg)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>		ceventname = <span style="color:#8be9fd;font-style:italic">append</span>(ceventname, data.InsertData.Ceventname)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>		ceventtype = <span style="color:#8be9fd;font-style:italic">append</span>(ceventtype, data.InsertData.Ceventtype)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>		cflowdir = <span style="color:#8be9fd;font-style:italic">append</span>(cflowdir, data.InsertData.Cflowdir)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>		cobject = <span style="color:#8be9fd;font-style:italic">append</span>(cobject, data.InsertData.Cobject)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>		coperation = <span style="color:#8be9fd;font-style:italic">append</span>(coperation, data.InsertData.Coperation)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>		csrcip = <span style="color:#8be9fd;font-style:italic">append</span>(csrcip, data.InsertData.Csrcip)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>		csrclogtype = <span style="color:#8be9fd;font-style:italic">append</span>(csrclogtype, data.InsertData.Csrclogtype)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>		logtype_tag = <span style="color:#8be9fd;font-style:italic">append</span>(logtype_tag, data.InsertData.LogypeTag)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>		manufacturer = <span style="color:#8be9fd;font-style:italic">append</span>(manufacturer, data.InsertData.Manufacturer)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>		reason = <span style="color:#8be9fd;font-style:italic">append</span>(reason, data.InsertData.Reason)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>		iappprotocol = <span style="color:#8be9fd;font-style:italic">append</span>(iappprotocol, data.InsertData.Iappprotocol)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>		icollecttype = <span style="color:#8be9fd;font-style:italic">append</span>(icollecttype, data.InsertData.Icollecttype)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>		idstport = <span style="color:#8be9fd;font-style:italic">append</span>(idstport, data.InsertData.Idstport)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>		ieventlevel = <span style="color:#8be9fd;font-style:italic">append</span>(ieventlevel, data.InsertData.Ieventlevel)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>		imergecount = <span style="color:#8be9fd;font-style:italic">append</span>(imergecount, data.InsertData.Imergecount)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>		iprotocol = <span style="color:#8be9fd;font-style:italic">append</span>(iprotocol, data.InsertData.Iprotocol)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>		isrcport = <span style="color:#8be9fd;font-style:italic">append</span>(isrcport, data.InsertData.Iprotocol)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>		lduration = <span style="color:#8be9fd;font-style:italic">append</span>(lduration, data.InsertData.Lduration)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>		lrecivepack = <span style="color:#8be9fd;font-style:italic">append</span>(lrecivepack, data.InsertData.Lrecivepack)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>		lsendpack = <span style="color:#8be9fd;font-style:italic">append</span>(lsendpack, data.InsertData.Lsendpack)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>		request_body_len = <span style="color:#8be9fd;font-style:italic">append</span>(request_body_len, data.InsertData.RequestBodyLen)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>		response_body_len = <span style="color:#8be9fd;font-style:italic">append</span>(response_body_len, data.InsertData.ResponseBodyLen)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>		lendtime = <span style="color:#8be9fd;font-style:italic">append</span>(lendtime, data.InsertData.Lendtime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>		lid = <span style="color:#8be9fd;font-style:italic">append</span>(lid, data.InsertData.Lid)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>		loccurtime = <span style="color:#8be9fd;font-style:italic">append</span>(loccurtime, data.InsertData.Loccurtime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>		lrecepttime = <span style="color:#8be9fd;font-style:italic">append</span>(lrecepttime, data.InsertData.Lrecepttime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>		lstartime = <span style="color:#8be9fd;font-style:italic">append</span>(lstartime, data.InsertData.Lstartime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>	}
+</span></span></code></pre></div><p>写入的时候也是需要先解析为batch，然后再将我们预先定义好的字段映射到batch的column上，最后再通过Send写入到ck。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">insert</span>(conn driver.Conn, batch <span style="color:#8be9fd">int</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>	start <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>	ctx <span style="color:#ff79c6">:=</span> context.<span style="color:#50fa7b">Background</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>	bt, err <span style="color:#ff79c6">:=</span> conn.<span style="color:#50fa7b">PrepareBatch</span>(ctx, data.InsertSql)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>	<span style="color:#ff79c6">if</span> err <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>		log.<span style="color:#50fa7b">Fatal</span>(err)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>	s <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">0</span>).<span style="color:#50fa7b">Append</span>(ccollectorip)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">1</span>).<span style="color:#50fa7b">Append</span>(cdevip)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">2</span>).<span style="color:#50fa7b">Append</span>(cdevtype)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">3</span>).<span style="color:#50fa7b">Append</span>(cdstip)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">4</span>).<span style="color:#50fa7b">Append</span>(ceventmsg)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">5</span>).<span style="color:#50fa7b">Append</span>(ceventname)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">6</span>).<span style="color:#50fa7b">Append</span>(ceventtype)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">7</span>).<span style="color:#50fa7b">Append</span>(cflowdir)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">8</span>).<span style="color:#50fa7b">Append</span>(cobject)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">9</span>).<span style="color:#50fa7b">Append</span>(coperation)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">10</span>).<span style="color:#50fa7b">Append</span>(csrcip)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">11</span>).<span style="color:#50fa7b">Append</span>(csrclogtype)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">12</span>).<span style="color:#50fa7b">Append</span>(logtype_tag)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">13</span>).<span style="color:#50fa7b">Append</span>(manufacturer)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">14</span>).<span style="color:#50fa7b">Append</span>(reason)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">15</span>).<span style="color:#50fa7b">Append</span>(iappprotocol)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">16</span>).<span style="color:#50fa7b">Append</span>(icollecttype)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">17</span>).<span style="color:#50fa7b">Append</span>(idstport)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">18</span>).<span style="color:#50fa7b">Append</span>(ieventlevel)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">19</span>).<span style="color:#50fa7b">Append</span>(imergecount)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">20</span>).<span style="color:#50fa7b">Append</span>(iprotocol)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">21</span>).<span style="color:#50fa7b">Append</span>(isrcport)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">22</span>).<span style="color:#50fa7b">Append</span>(lduration)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">23</span>).<span style="color:#50fa7b">Append</span>(lrecivepack)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">24</span>).<span style="color:#50fa7b">Append</span>(lsendpack)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">25</span>).<span style="color:#50fa7b">Append</span>(request_body_len)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">26</span>).<span style="color:#50fa7b">Append</span>(response_body_len)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">27</span>).<span style="color:#50fa7b">Append</span>(lendtime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">28</span>).<span style="color:#50fa7b">Append</span>(lid)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">29</span>).<span style="color:#50fa7b">Append</span>(loccurtime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">30</span>).<span style="color:#50fa7b">Append</span>(lrecepttime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>	bt.<span style="color:#50fa7b">Column</span>(<span style="color:#bd93f9">31</span>).<span style="color:#50fa7b">Append</span>(lstartime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>	e <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>	bt.<span style="color:#50fa7b">Send</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>	end <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>	fmt.<span style="color:#50fa7b">Printf</span>(<span style="color:#f1fa8c">&#34;记录数: %d, 耗时: %d, 循环准备耗时: %d, 速率: %d(条/秒) \n&#34;</span>, batch, (end<span style="color:#ff79c6">-</span>start)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, (e<span style="color:#ff79c6">-</span>s)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, <span style="color:#8be9fd;font-style:italic">int64</span>(batch<span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000000</span><span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000</span>)<span style="color:#ff79c6">/</span>(end<span style="color:#ff79c6">-</span>start))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>}
+</span></span></code></pre></div><p>测试结果：</p>
+<p>![image-20230310150127354](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310150127354.png)</p>
+<p>![image-20230310150159240](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310150159240.png)</p>
+<p>从测试结果来看，ck的写入速度差不多在每秒6w到7万之间，平均在6.5w/s，对比本机的api测试结果略有提升，这是为什么呢？在扒了一些文档和看了一下底层带吗后，发现通过字段写入这样做的好处是避免了行列的转换，我们都知道ck是一个列式存储数据库，并且因为我们预先定义好了字段的类型，在数据处理上也避免了一些类型判断和反射。</p>
+<h3 id="ch-gohttpsgithubcomclickhousech-go"><a href="https://github.com/ClickHouse/ch-go" target="_blank">ch-go</a><a class="anchorjs-link" href="#ch-gohttpsgithubcomclickhousech-go"></a></h3><p>建立连接都是大同小异，我们就不在细看了，直接来看写入的阶段</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">insert</span>(conn <span style="color:#ff79c6">*</span>ch.Client, batch <span style="color:#8be9fd">int</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>	start <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>	<span style="color:#8be9fd;font-style:italic">var</span> (
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>		ccollectorip, cdevip, cdevtype, cdstip, ceventmsg, ceventname, ceventtype, cflowdir, cobject, coperation, csrcip, csrclogtype,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>		logtype_tag, manufacturer, reason proto.ColStr
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>		iappprotocol, icollecttype, idstport, ieventlevel, imergecount, iprotocol, isrcport                                       proto.ColInt32
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>		lduration, lrecivepack, lsendpack, request_body_len, response_body_len, lendtime, lid, loccurtime, lrecepttime, lstartime proto.ColInt64
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>	)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>	<span style="color:#ff79c6">for</span> i <span style="color:#ff79c6">:=</span> <span style="color:#bd93f9">0</span>; i &lt; batch; i<span style="color:#ff79c6">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>		ccollectorip.<span style="color:#50fa7b">Append</span>(data.InsertData.Ccollectorip)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>		cdevip.<span style="color:#50fa7b">Append</span>(data.InsertData.Cdevip)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>		cdevtype.<span style="color:#50fa7b">Append</span>(data.InsertData.Cdevtype)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>		cdstip.<span style="color:#50fa7b">Append</span>(data.InsertData.Cdstip)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>		ceventmsg.<span style="color:#50fa7b">Append</span>(data.InsertData.Ceventmsg)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>		ceventname.<span style="color:#50fa7b">Append</span>(data.InsertData.Ceventname)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>		ceventtype.<span style="color:#50fa7b">Append</span>(data.InsertData.Ceventtype)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>		cflowdir.<span style="color:#50fa7b">Append</span>(data.InsertData.Cflowdir)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>		cobject.<span style="color:#50fa7b">Append</span>(data.InsertData.Cobject)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>		coperation.<span style="color:#50fa7b">Append</span>(data.InsertData.Coperation)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>		csrcip.<span style="color:#50fa7b">Append</span>(data.InsertData.Csrcip)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>		csrclogtype.<span style="color:#50fa7b">Append</span>(data.InsertData.Csrclogtype)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>		logtype_tag.<span style="color:#50fa7b">Append</span>(data.InsertData.LogypeTag)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>		manufacturer.<span style="color:#50fa7b">Append</span>(data.InsertData.Manufacturer)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>		reason.<span style="color:#50fa7b">Append</span>(data.InsertData.Reason)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>		iappprotocol.<span style="color:#50fa7b">Append</span>(data.InsertData.Iappprotocol)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>		icollecttype.<span style="color:#50fa7b">Append</span>(data.InsertData.Icollecttype)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>		idstport.<span style="color:#50fa7b">Append</span>(data.InsertData.Idstport)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>		ieventlevel.<span style="color:#50fa7b">Append</span>(data.InsertData.Ieventlevel)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>		imergecount.<span style="color:#50fa7b">Append</span>(data.InsertData.Imergecount)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>		iprotocol.<span style="color:#50fa7b">Append</span>(data.InsertData.Iprotocol)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>		isrcport.<span style="color:#50fa7b">Append</span>(data.InsertData.Isrcport)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>		lduration.<span style="color:#50fa7b">Append</span>(data.InsertData.Lduration)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>		lrecivepack.<span style="color:#50fa7b">Append</span>(data.InsertData.Lrecivepack)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>		lsendpack.<span style="color:#50fa7b">Append</span>(data.InsertData.Lsendpack)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>		request_body_len.<span style="color:#50fa7b">Append</span>(data.InsertData.RequestBodyLen)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>		response_body_len.<span style="color:#50fa7b">Append</span>(data.InsertData.ResponseBodyLen)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>		lendtime.<span style="color:#50fa7b">Append</span>(data.InsertData.Lendtime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>		lid.<span style="color:#50fa7b">Append</span>(data.InsertData.Lid)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>		loccurtime.<span style="color:#50fa7b">Append</span>(data.InsertData.Loccurtime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>		lrecepttime.<span style="color:#50fa7b">Append</span>(data.InsertData.Lrecepttime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>		lstartime.<span style="color:#50fa7b">Append</span>(data.InsertData.Lstartime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>	input <span style="color:#ff79c6">:=</span> proto.Input{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>		{Name: <span style="color:#f1fa8c">&#34;ccollectorip&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>ccollectorip},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>		{Name: <span style="color:#f1fa8c">&#34;cdevip&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>cdevip},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>		{Name: <span style="color:#f1fa8c">&#34;cdevtype&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>cdevtype},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47</span><span>		{Name: <span style="color:#f1fa8c">&#34;cdstip&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>cdstip},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48</span><span>		{Name: <span style="color:#f1fa8c">&#34;ceventmsg&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>ceventmsg},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49</span><span>		{Name: <span style="color:#f1fa8c">&#34;ceventname&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>ceventname},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50</span><span>		{Name: <span style="color:#f1fa8c">&#34;ceventtype&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>ceventtype},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51</span><span>		{Name: <span style="color:#f1fa8c">&#34;cflowdir&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>cflowdir},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52</span><span>		{Name: <span style="color:#f1fa8c">&#34;cobject&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>cobject},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53</span><span>		{Name: <span style="color:#f1fa8c">&#34;coperation&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>coperation},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54</span><span>		{Name: <span style="color:#f1fa8c">&#34;csrcip&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>csrcip},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55</span><span>		{Name: <span style="color:#f1fa8c">&#34;csrclogtype&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>csrclogtype},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56</span><span>		{Name: <span style="color:#f1fa8c">&#34;logtype_tag&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>logtype_tag},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57</span><span>		{Name: <span style="color:#f1fa8c">&#34;manufacturer&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>manufacturer},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58</span><span>		{Name: <span style="color:#f1fa8c">&#34;reason&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>reason},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59</span><span>		{Name: <span style="color:#f1fa8c">&#34;iappprotocol&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>iappprotocol},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60</span><span>		{Name: <span style="color:#f1fa8c">&#34;icollecttype&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>icollecttype},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61</span><span>		{Name: <span style="color:#f1fa8c">&#34;idstport&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>idstport},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62</span><span>		{Name: <span style="color:#f1fa8c">&#34;ieventlevel&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>ieventlevel},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63</span><span>		{Name: <span style="color:#f1fa8c">&#34;imergecount&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>imergecount},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64</span><span>		{Name: <span style="color:#f1fa8c">&#34;iprotocol&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>iprotocol},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65</span><span>		{Name: <span style="color:#f1fa8c">&#34;isrcport&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>isrcport},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66</span><span>		{Name: <span style="color:#f1fa8c">&#34;lduration&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>lduration},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67</span><span>		{Name: <span style="color:#f1fa8c">&#34;lrecivepack&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>lrecivepack},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68</span><span>		{Name: <span style="color:#f1fa8c">&#34;lsendpack&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>lsendpack},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">69</span><span>		{Name: <span style="color:#f1fa8c">&#34;request_body_len&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>request_body_len},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">70</span><span>		{Name: <span style="color:#f1fa8c">&#34;response_body_len&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>response_body_len},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">71</span><span>		{Name: <span style="color:#f1fa8c">&#34;lendtime&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>lendtime},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">72</span><span>		{Name: <span style="color:#f1fa8c">&#34;lid&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>lid},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">73</span><span>		{Name: <span style="color:#f1fa8c">&#34;loccurtime&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>loccurtime},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">74</span><span>		{Name: <span style="color:#f1fa8c">&#34;lrecepttime&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>lrecepttime},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">75</span><span>		{Name: <span style="color:#f1fa8c">&#34;lstartime&#34;</span>, Data: <span style="color:#ff79c6">&amp;</span>lstartime},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">76</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">77</span><span>	s <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">78</span><span>	<span style="color:#ff79c6">if</span> err <span style="color:#ff79c6">:=</span> conn.<span style="color:#50fa7b">Do</span>(context.<span style="color:#50fa7b">Background</span>(), ch.Query{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">79</span><span>		Body:  insertSql,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">80</span><span>		Input: input,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">81</span><span>	}); err <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">82</span><span>		log.<span style="color:#50fa7b">Fatal</span>(err)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">83</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">84</span><span>	end <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">85</span><span>	fmt.<span style="color:#50fa7b">Printf</span>(<span style="color:#f1fa8c">&#34;记录数: %d, 耗时: %d, 循环准备耗时: %d, 速率: %d(条/秒) \n&#34;</span>, batch, (end<span style="color:#ff79c6">-</span>start)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, (s<span style="color:#ff79c6">-</span>start)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, <span style="color:#8be9fd;font-style:italic">int64</span>(batch<span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000000</span><span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000</span>)<span style="color:#ff79c6">/</span>(end<span style="color:#ff79c6">-</span>start))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">86</span><span>}
+</span></span></code></pre></div><p>写入的处理看起来跟clickhouse-go的字段写入很像，也是先定义好了数据结构，把结构和字段映射到一起，最终通过Do的方法写入ck。</p>
+<p>测试结果：</p>
+<p>![image-20230310161643762](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310161643762.png)</p>
+<p>![image-20230310161724543](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310161724543.png)</p>
+<p>ch-go的写入性能跟clickhouse-go的性能很接近，也是平均6.7w-6.8w/s，但是ch-go的写入速率非常平稳，相比来看，在大数据量写入的情况下ch-go是比较稳定的。</p>
+<h3 id="databasesqldatabasesql"><a href="/database/sql">database/sql</a><a class="anchorjs-link" href="#databasesqldatabasesql"></a></h3><p>sql库在连接ck的时候需要一个ck的引擎，用的也是clickhouse-go的引擎，本来享用v2版本进行测试，但是在连接的过程中出现了这个报错：</p>
+<p><em><strong>code: 81, message: Database default doesn&rsquo;t exist</strong></em></p>
+<p>即使数据库怎在也会报这个错误，所以在进行测试的时候选了v1版本的clickhouse-go引擎，从连接看就能够知道使用了clickhouse-go的引擎，写入的时候是使用了事务。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>	conn <span style="color:#ff79c6">:=</span> clickhouse.<span style="color:#50fa7b">OpenDB</span>(<span style="color:#ff79c6">&amp;</span>clickhouse.Options{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>		Addr: []<span style="color:#8be9fd">string</span>{<span style="color:#ff79c6">*</span>host},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>		Auth: clickhouse.Auth{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>			Database: <span style="color:#ff79c6">*</span>db,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>			Username: <span style="color:#ff79c6">*</span>user,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>			Password: <span style="color:#ff79c6">*</span>pass,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>		},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>		Settings: clickhouse.Settings{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>			<span style="color:#f1fa8c">&#34;max_execution_time&#34;</span>: <span style="color:#bd93f9">60</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>		},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>		DialTimeout: <span style="color:#bd93f9">5</span> <span style="color:#ff79c6">*</span> time.Second,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>		Debug:       <span style="color:#ff79c6">true</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>	})
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">insert</span>(conn <span style="color:#ff79c6">*</span>sql.DB, batch <span style="color:#8be9fd">int</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>	start <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>	tx, err <span style="color:#ff79c6">:=</span> conn.<span style="color:#50fa7b">Begin</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>	<span style="color:#ff79c6">if</span> err <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>		log.<span style="color:#50fa7b">Fatal</span>(err)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>	stmt, err <span style="color:#ff79c6">:=</span> tx.<span style="color:#50fa7b">Prepare</span>(data.InsertSql)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>	<span style="color:#ff79c6">if</span> err <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>		log.<span style="color:#50fa7b">Fatal</span>(err)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>	s <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>	<span style="color:#ff79c6">for</span> i <span style="color:#ff79c6">:=</span> <span style="color:#bd93f9">0</span>; i &lt; batch; i<span style="color:#ff79c6">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>		_, err <span style="color:#ff79c6">:=</span> stmt.<span style="color:#50fa7b">Exec</span>(data.InsertData.Ccollectorip, data.InsertData.Cdevip, data.InsertData.Cdevtype, data.InsertData.Cdstip, data.InsertData.Ceventmsg,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>			data.InsertData.Ceventname, data.InsertData.Ceventtype, data.InsertData.Cflowdir, data.InsertData.Cobject, data.InsertData.Coperation,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>			data.InsertData.Csrcip, data.InsertData.Csrclogtype, data.InsertData.LogypeTag, data.InsertData.Manufacturer, data.InsertData.Reason,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>			data.InsertData.Iappprotocol, data.InsertData.Icollecttype, data.InsertData.Idstport, data.InsertData.Ieventlevel, data.InsertData.Imergecount,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>			data.InsertData.Iprotocol, data.InsertData.Isrcport, data.InsertData.Lduration, data.InsertData.Lrecivepack, data.InsertData.Lsendpack,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>			data.InsertData.RequestBodyLen, data.InsertData.ResponseBodyLen, data.InsertData.Lendtime, data.InsertData.Lid, data.InsertData.Loccurtime,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>			data.InsertData.Lrecepttime, data.InsertData.Lstartime)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>		<span style="color:#ff79c6">if</span> err <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>			log.<span style="color:#50fa7b">Fatal</span>(err)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>		}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>	e <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>	tx.<span style="color:#50fa7b">Commit</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>	stmt.<span style="color:#50fa7b">Close</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>	end <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>	fmt.<span style="color:#50fa7b">Printf</span>(<span style="color:#f1fa8c">&#34;记录数: %d, 耗时: %d, 循环准备耗时: %d, 速率: %d(条/秒) \n&#34;</span>, batch, (end<span style="color:#ff79c6">-</span>start)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, (e<span style="color:#ff79c6">-</span>s)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, <span style="color:#8be9fd;font-style:italic">int64</span>(batch<span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000000</span><span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000</span>)<span style="color:#ff79c6">/</span>(end<span style="color:#ff79c6">-</span>start))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>}
+</span></span></code></pre></div><p>测试结果：</p>
+<p>![image-20230310163031548](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310163031548.png)</p>
+<p>![image-20230310163052442](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310163052442.png)</p>
+<p>从测试结果来看，每秒写入的速度平均为5.5w/s，消耗时间多的地方在Exec的方法上，也就是数据处理上。</p>
+<h3 id="sqlxhttpsgithubcomjmoironsqlx"><a href="https://github.com/jmoiron/sqlx" target="_blank">sqlx</a><a class="anchorjs-link" href="#sqlxhttpsgithubcomjmoironsqlx"></a></h3><p>sqlx是在标准库database/sql上进行了扩展，提供了自己的一些查询或事务的方法，连接也非常简单。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>	conn, err <span style="color:#ff79c6">:=</span> sqlx.<span style="color:#50fa7b">Connect</span>(<span style="color:#f1fa8c">&#34;clickhouse&#34;</span>, fmt.<span style="color:#50fa7b">Sprintf</span>(<span style="color:#f1fa8c">&#34;tcp://%s?username=%s&amp;password=%s&amp;database=%s&amp;debug=false&#34;</span>, <span style="color:#ff79c6">*</span>host, <span style="color:#ff79c6">*</span>user, <span style="color:#ff79c6">*</span>pass, <span style="color:#ff79c6">*</span>db))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>	<span style="color:#ff79c6">if</span> err <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>		<span style="color:#8be9fd;font-style:italic">panic</span>(<span style="color:#50fa7b">any</span>(err))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>	}
+</span></span></code></pre></div><p>数据的写入就跟database/sql是一样的，所以性能跟其很像，在这就不多做赘述了，有兴趣的可以自行研究一下。</p>
+<h3 id="gormhttpsgithubcomgo-gormgorm"><a href="https://github.com/go-gorm/gorm" target="_blank">Gorm</a><a class="anchorjs-link" href="#gormhttpsgithubcomgo-gormgorm"></a></h3><p>gorm是一个应用广泛的golang orm框架，因其功能全，支持原生sql，文档健全而备受好评，接下来我们看一下gorm在ck写入方面的性能如何。gorm的连接和写入也非常简单和暴力，就一个Creat方法就搞定，对于开发人员来说，更加喜欢这种简洁只记得方式。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>	dsn <span style="color:#ff79c6">:=</span> fmt.<span style="color:#50fa7b">Sprintf</span>(<span style="color:#f1fa8c">&#34;clickhouse://%s:%s@%s/%s&#34;</span>, <span style="color:#ff79c6">*</span>user, <span style="color:#ff79c6">*</span>pass, <span style="color:#ff79c6">*</span>host, <span style="color:#ff79c6">*</span>db)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>	db, err <span style="color:#ff79c6">:=</span> gorm.<span style="color:#50fa7b">Open</span>(clickhouse.<span style="color:#50fa7b">Open</span>(dsn), <span style="color:#ff79c6">&amp;</span>gorm.Config{})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>	<span style="color:#ff79c6">if</span> err <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>		<span style="color:#8be9fd;font-style:italic">panic</span>(<span style="color:#50fa7b">any</span>(err))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>	}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">insert</span>(db <span style="color:#ff79c6">*</span>gorm.DB, batch <span style="color:#8be9fd">int</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>	start <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>	result <span style="color:#ff79c6">:=</span> <span style="color:#8be9fd;font-style:italic">make</span>([]data.Data, <span style="color:#bd93f9">0</span>, batch)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>	<span style="color:#ff79c6">for</span> i <span style="color:#ff79c6">:=</span> <span style="color:#bd93f9">0</span>; i &lt; <span style="color:#bd93f9">100000</span>; i<span style="color:#ff79c6">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>		result = <span style="color:#8be9fd;font-style:italic">append</span>(result, data.InsertData)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>	db.<span style="color:#50fa7b">Table</span>(<span style="color:#f1fa8c">&#34;event&#34;</span>).<span style="color:#50fa7b">Create</span>(<span style="color:#ff79c6">&amp;</span>result)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>	end <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">UnixNano</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>	fmt.<span style="color:#50fa7b">Printf</span>(<span style="color:#f1fa8c">&#34;记录数: %d, 耗时: %d, 速率: %d(条/秒) \n&#34;</span>, <span style="color:#bd93f9">100000</span>, (end<span style="color:#ff79c6">-</span>start)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, <span style="color:#8be9fd;font-style:italic">int64</span>(<span style="color:#bd93f9">100000</span><span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000000</span><span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000</span>)<span style="color:#ff79c6">/</span>(end<span style="color:#ff79c6">-</span>start))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>}
+</span></span></code></pre></div><p>测试结果：</p>
+<p>![image-20230310164942129](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310164942129.png)</p>
+<p>从测试结果来看，gorm的ck写入性能却不尽人意，只能做到4w/s，不过也没有对gorm抱有太大希望，因为gorm的优势在于便利的api，在项目中也用gorm对mysql进行查询和写入，也是非常丝滑，性能并没有什么问题。对于ck性能低，也许是跟gorm的ck社区不是很活跃，关注的重点不在这上面。</p>
+<h2 id="测试结果">测试结果<a class="anchorjs-link" href="#%e6%b5%8b%e8%af%95%e7%bb%93%e6%9e%9c"></a></h2><table>
+<thead>
+<tr>
+<th>clickhouse-go</th>
+<th>ch-go</th>
+<th>database/sql</th>
+<th>Sql</th>
+<th>grom</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6.5w/s (column)</td>
+<td>6.7w/s</td>
+<td>5.5w/s</td>
+<td>6w/s</td>
+<td>4w/s</td>
+</tr>
+</tbody>
+</table>
+<h2 id="结论">结论<a class="anchorjs-link" href="#%e7%bb%93%e8%ae%ba"></a></h2><p>从以上的测试结果来看，官方推荐的clickhouse-go和ch-go更具有优势，所以选择其中任意一种均可，但如果在字段数量小的情况下，笔者任务ch-go的写入更具有优势，毕竟clickhouse-go更专注于低吞吐量和数据分析查询。因此这两个库需要看自己的使用而定。</p>
+<p>以上测试并不代表任何情况下的ck写入性能，具体情况还需要自己亲自试过才要决定。</p>
+
+
+        <hr style="visibility: hidden;" />
+        <ul class="pager">
+          
+          
+        </ul>
+        <hr style="visibility: hidden;" />
+
+        
+        
+
+
+
+
+
+
+      </div>
+
+      
+      
+      
+      
+      <div class="
+              col-lg-8 col-lg-offset-2
+              col-md-10 col-md-offset-1
+              sidebar-container">
+
+        
+        
+        <section>
+  
+  
+  <hr class="hidden-sm hidden-xs">
+  
+  <h5>FEATURED TAGS</h5>
+  <div class="tags">
+    
+    <a href="/tags/clickhouse/">clickhouse</a>
+    
+    <a href="/tags/golang/">golang</a>
+    
+  </div>
+</section>
+
+        
+        
+
+      </div>
+    </div>
+  </div>
+</article>
+
+
+
+  
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        
+        <ul class="list-inline text-center">
+
+<li>
+  <a href="https://mastodon.social/johndoe" target="_blank">
+    <span class="fa-stack fa-lg">
+      <i class="fa fa-circle fa-stack-2x"></i>
+      <i class="fab fa-mastodon fa-stack-1x fa-inverse"></i>
+    </span>
+  </a>
+</li>
+
+
+<li>
+  <a href="/index.xml" target="_blank">
+    <span class="fa-stack fa-lg">
+      <i class="fa fa-circle fa-stack-2x"></i>
+      <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+    </span>
+  </a>
+</li></ul>
+
+        <p class="copyright text-muted">
+          Copyright &copy; JARVIS是只喵 2023  
+          <br>
+          Powered by <a href="https://gohugo.io">Hugo</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src=/js/jquery.min.js></script>
+<script src=/js/bootstrap.min.js crossorigin="anonymous"></script>
+
+
+
+<script src="/js/hux-blog.min.c4ea77041cd3edbfc8b2622cd887a9a5d8760a4162d14489e36d2a3fa4c90172.js"></script>
+
+
+<script src=/js/simple-jekyll-search.min.js></script>
+
+
+<script src="/js/search.min.53bce5da475b4d362500e5ce5dddfa22e20e1b9018777411d2020b4b839c9310.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script src="/zoomjs/zoom.min.js"></script>
+
+</body>
+
+</html>

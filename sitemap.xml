@@ -2,12 +2,33 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://jiaweisizzz.github.io/categories/</loc>
+    <loc>https://jiaweisizzz.github.io/tags/</loc>
+    <lastmod>2023-03-10T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url><url>
+    <loc>https://jiaweisizzz.github.io/tags/clickhouse/</loc>
+    <lastmod>2023-03-10T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://jiaweisizzz.github.io/tags/golang/</loc>
+    <lastmod>2023-03-10T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://jiaweisizzz.github.io/</loc>
+    <lastmod>2023-03-10T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://jiaweisizzz.github.io/posts/</loc>
+    <lastmod>2023-03-10T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://jiaweisizzz.github.io/posts/go_clickhouse%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/</loc>
+    <lastmod>2023-03-10T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://jiaweisizzz.github.io/about/</loc>
+    <priority>0</priority>
+  </url><url>
+    <loc>https://jiaweisizzz.github.io/archive/</loc>
+    <priority>0</priority>
+  </url><url>
+    <loc>https://jiaweisizzz.github.io/categories/</loc>
   </url><url>
     <loc>https://jiaweisizzz.github.io/series/</loc>
-  </url><url>
-    <loc>https://jiaweisizzz.github.io/tags/</loc>
   </url>
 </urlset>
