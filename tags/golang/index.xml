@@ -13,7 +13,7 @@
       <pubDate>Fri, 10 Mar 2023 00:00:00 +0000</pubDate>
       
       <guid>https://jiaweisizzz.github.io/posts/go_clickhouse%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/</guid>
-      <description>主流的golang clickhouse客户端写入性能测试Clickhouse(以下简称ck)是战斗民族Yandex公司在2016年开源的专为</description>
+      <description>Clickhouse(以下简称ck)是战斗民族Yandex公司在2016年开源的专为在线数据分析而设计的高性能列式存储数据库，感兴趣的同学可</description>
     </item>
     
   </channel>
