@@ -301,9 +301,19 @@
 </span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>	fmt.<span style="color:#50fa7b">Printf</span>(<span style="color:#f1fa8c">&#34;记录数: %d, 耗时: %d, 循环准备耗时: %d, 速率: %d(条/秒) \n&#34;</span>, batch, (end<span style="color:#ff79c6">-</span>start)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, (e<span style="color:#ff79c6">-</span>s)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, <span style="color:#8be9fd;font-style:italic">int64</span>(batch<span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000000</span><span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000</span>)<span style="color:#ff79c6">/</span>(end<span style="color:#ff79c6">-</span>start))
 </span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>}
 </span></span></code></pre></div><p>测试结果：</p>
-<p>![image-20230310150030541](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310150030541.png)</p>
+<p><figure>
+  <a class="paragraph-image">
+    <img data-src="clickhouse-go1.png" data-action="zoom" alt="img"  class="lazyload">
+  </a>
+  
+</figure></p>
 <p>从打印结果来看差不多速率在6w-7w/s之间，再来看一下grafana也是平均6.5w/s左右。</p>
-<p>![image-20230310150053893](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310150053893.png)</p>
+<p><figure>
+  <a class="paragraph-image">
+    <img data-src="clickhouse-go2.png" data-action="zoom" alt="img"  class="lazyload">
+  </a>
+  
+</figure></p>
 <p>最终结果：单线程下，clickhouse-go的写入速率在6w/s。</p>
 <h4 id="write-by-column">Write by column<a class="anchorjs-link" href="#write-by-column"></a></h4><p>连接跟之前都是一样的，写入的处理略有区别，需要预先定义插入字段的类型，我们提前将数据放到定义好的字段中。</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">var</span> (
@@ -395,8 +405,18 @@
 </span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>	fmt.<span style="color:#50fa7b">Printf</span>(<span style="color:#f1fa8c">&#34;记录数: %d, 耗时: %d, 循环准备耗时: %d, 速率: %d(条/秒) \n&#34;</span>, batch, (end<span style="color:#ff79c6">-</span>start)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, (e<span style="color:#ff79c6">-</span>s)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, <span style="color:#8be9fd;font-style:italic">int64</span>(batch<span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000000</span><span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000</span>)<span style="color:#ff79c6">/</span>(end<span style="color:#ff79c6">-</span>start))
 </span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>}
 </span></span></code></pre></div><p>测试结果：</p>
-<p>![image-20230310150127354](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310150127354.png)</p>
-<p>![image-20230310150159240](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310150159240.png)</p>
+<p><figure>
+  <a class="paragraph-image">
+    <img data-src="clickhouse-go3.png" data-action="zoom" alt="img"  class="lazyload">
+  </a>
+  
+</figure></p>
+<p><figure>
+  <a class="paragraph-image">
+    <img data-src="clickhouse-go4.png" data-action="zoom" alt="img"  class="lazyload">
+  </a>
+  
+</figure></p>
 <p>从测试结果来看，ck的写入速度差不多在每秒6w到7万之间，平均在6.5w/s，对比本机的api测试结果略有提升，这是为什么呢？在扒了一些文档和看了一下底层带吗后，发现通过字段写入这样做的好处是避免了行列的转换，我们都知道ck是一个列式存储数据库，并且因为我们预先定义好了字段的类型，在数据处理上也避免了一些类型判断和反射。</p>
 <h3 id="ch-gohttpsgithubcomclickhousech-go"><a href="https://github.com/ClickHouse/ch-go" target="_blank">ch-go</a><a class="anchorjs-link" href="#ch-gohttpsgithubcomclickhousech-go"></a></h3><p>建立连接都是大同小异，我们就不在细看了，直接来看写入的阶段</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">insert</span>(conn <span style="color:#ff79c6">*</span>ch.Client, batch <span style="color:#8be9fd">int</span>) {
@@ -487,8 +507,18 @@
 </span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">86</span><span>}
 </span></span></code></pre></div><p>写入的处理看起来跟clickhouse-go的字段写入很像，也是先定义好了数据结构，把结构和字段映射到一起，最终通过Do的方法写入ck。</p>
 <p>测试结果：</p>
-<p>![image-20230310161643762](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310161643762.png)</p>
-<p>![image-20230310161724543](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310161724543.png)</p>
+<p><figure>
+  <a class="paragraph-image">
+    <img data-src="ch-go1.png" data-action="zoom" alt="img"  class="lazyload">
+  </a>
+  
+</figure></p>
+<p><figure>
+  <a class="paragraph-image">
+    <img data-src="ch-go2.png" data-action="zoom" alt="img"  class="lazyload">
+  </a>
+  
+</figure></p>
 <p>ch-go的写入性能跟clickhouse-go的性能很接近，也是平均6.7w-6.8w/s，但是ch-go的写入速率非常平稳，相比来看，在大数据量写入的情况下ch-go是比较稳定的。</p>
 <h3 id="databasesqldatabasesql"><a href="/database/sql">database/sql</a><a class="anchorjs-link" href="#databasesqldatabasesql"></a></h3><p>sql库在连接ck的时候需要一个ck的引擎，用的也是clickhouse-go的引擎，本来享用v2版本进行测试，但是在连接的过程中出现了这个报错：</p>
 <p><em><strong>code: 81, message: Database default doesn&rsquo;t exist</strong></em></p>
@@ -536,8 +566,18 @@
 </span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>	fmt.<span style="color:#50fa7b">Printf</span>(<span style="color:#f1fa8c">&#34;记录数: %d, 耗时: %d, 循环准备耗时: %d, 速率: %d(条/秒) \n&#34;</span>, batch, (end<span style="color:#ff79c6">-</span>start)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, (e<span style="color:#ff79c6">-</span>s)<span style="color:#ff79c6">/</span><span style="color:#bd93f9">1e6</span>, <span style="color:#8be9fd;font-style:italic">int64</span>(batch<span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000000</span><span style="color:#ff79c6">*</span><span style="color:#bd93f9">1000</span>)<span style="color:#ff79c6">/</span>(end<span style="color:#ff79c6">-</span>start))
 </span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>}
 </span></span></code></pre></div><p>测试结果：</p>
-<p>![image-20230310163031548](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310163031548.png)</p>
-<p>![image-20230310163052442](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310163052442.png)</p>
+<p><figure>
+  <a class="paragraph-image">
+    <img data-src="sql1.png" data-action="zoom" alt="img"  class="lazyload">
+  </a>
+  
+</figure></p>
+<p><figure>
+  <a class="paragraph-image">
+    <img data-src="sql2.png" data-action="zoom" alt=""  class="lazyload">
+  </a>
+  
+</figure></p>
 <p>从测试结果来看，每秒写入的速度平均为5.5w/s，消耗时间多的地方在Exec的方法上，也就是数据处理上。</p>
 <h3 id="sqlxhttpsgithubcomjmoironsqlx"><a href="https://github.com/jmoiron/sqlx" target="_blank">sqlx</a><a class="anchorjs-link" href="#sqlxhttpsgithubcomjmoironsqlx"></a></h3><p>sqlx是在标准库database/sql上进行了扩展，提供了自己的一些查询或事务的方法，连接也非常简单。</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>	conn, err <span style="color:#ff79c6">:=</span> sqlx.<span style="color:#50fa7b">Connect</span>(<span style="color:#f1fa8c">&#34;clickhouse&#34;</span>, fmt.<span style="color:#50fa7b">Sprintf</span>(<span style="color:#f1fa8c">&#34;tcp://%s?username=%s&amp;password=%s&amp;database=%s&amp;debug=false&#34;</span>, <span style="color:#ff79c6">*</span>host, <span style="color:#ff79c6">*</span>user, <span style="color:#ff79c6">*</span>pass, <span style="color:#ff79c6">*</span>db))
@@ -563,7 +603,12 @@
 </span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
 </span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>}
 </span></span></code></pre></div><p>测试结果：</p>
-<p>![image-20230310164942129](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230310164942129.png)</p>
+<p><figure>
+  <a class="paragraph-image">
+    <img data-src="gorm.png" data-action="zoom" alt="gorm"  class="lazyload">
+  </a>
+  
+</figure></p>
 <p>从测试结果来看，gorm的ck写入性能却不尽人意，只能做到4w/s，不过也没有对gorm抱有太大希望，因为gorm的优势在于便利的api，在项目中也用gorm对mysql进行查询和写入，也是非常丝滑，性能并没有什么问题。对于ck性能低，也许是跟gorm的ck社区不是很活跃，关注的重点不在这上面。</p>
 <h2 id="测试结果">测试结果<a class="anchorjs-link" href="#%e6%b5%8b%e8%af%95%e7%bb%93%e6%9e%9c"></a></h2><table>
 <thead>
