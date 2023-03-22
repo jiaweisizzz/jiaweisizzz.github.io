@@ -522,7 +522,7 @@
 <p>ch-go的写入性能跟clickhouse-go的性能很接近，也是平均6.7w-6.8w/s，但是ch-go的写入速率非常平稳，相比来看，在大数据量写入的情况下ch-go是比较稳定的。</p>
 <h3 id="databasesqldatabasesql"><a href="/database/sql">database/sql</a><a class="anchorjs-link" href="#databasesqldatabasesql"></a></h3><p>sql库在连接ck的时候需要一个ck的引擎，用的也是clickhouse-go的引擎，本来想用v2版本进行测试，但是在连接的过程中出现了这个报错：</p>
 <p><em><strong>code: 81, message: Database default doesn&rsquo;t exist</strong></em></p>
-<p>即使数据库村在也会报这个错误，所以在进行测试的时候选了v1版本的clickhouse-go引擎，从连接看就能够知道使用了clickhouse-go的引擎，写入的时候是使用了事务。</p>
+<p>即使数据库存在也会报这个错误，所以在进行测试的时候选了v1版本的clickhouse-go引擎，从连接看就能够知道使用了clickhouse-go的引擎，写入的时候是使用了事务。</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>	conn <span style="color:#ff79c6">:=</span> clickhouse.<span style="color:#50fa7b">OpenDB</span>(<span style="color:#ff79c6">&amp;</span>clickhouse.Options{
 </span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>		Addr: []<span style="color:#8be9fd">string</span>{<span style="color:#ff79c6">*</span>host},
 </span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>		Auth: clickhouse.Auth{
