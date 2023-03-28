@@ -6,7 +6,16 @@
     <description>Recent content on JARVIS</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 24 Mar 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://jiaweisizzz.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 28 Mar 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://jiaweisizzz.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Goland TensorFlow</title>
+      <link>https://jiaweisizzz.github.io/posts/go_tensorflow/</link>
+      <pubDate>Tue, 28 Mar 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://jiaweisizzz.github.io/posts/go_tensorflow/</guid>
+      <description>背景最近在工作中遇到了TensorFlow，需要用go调用处理好的模型。因为在上家公司也有用到过TensorFlow，当时用来根据天气情况预</description>
+    </item>
+    
     <item>
       <title>Goland 远程开发</title>
       <link>https://jiaweisizzz.github.io/posts/goland_remote_connect/</link>
