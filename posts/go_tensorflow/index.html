@@ -261,7 +261,12 @@
   
 </figure></p>
 <p>实践的过程发现<code>Config</code>类型根本不匹配，翻阅了源码发现关于运行的配置在<em><a href="https://www.tensorflow.org/code/tensorflow/core/protobuf/config.proto" target="_blank">https://www.tensorflow.org/code/tensorflow/core/protobuf/config.proto</a></em>这个文件内</p>
-<p>![image-20230328155226044](/Users/jiaweisi/Library/Application Support/typora-user-images/image-20230328155226044.png)</p>
+<p><figure>
+  <a class="paragraph-image">
+    <img data-src="img/8.png" data-action="zoom" alt=""  class="lazyload">
+  </a>
+  
+</figure></p>
 <p>在跟进这个库的源码发现在protobuf目录下存在config.pb.go文件，文件中有个<code>ConfigProto</code>结构体，正好能够跟上面网站上对应上，因此大胆猜测这个结构就是控制运行参数的。</p>
 <p><figure>
   <a class="paragraph-image">
