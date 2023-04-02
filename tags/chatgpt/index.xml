@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>chatgpt on JARVIS</title>
+    <link>https://jiaweisizzz.github.io/tags/chatgpt/</link>
+    <description>Recent content in chatgpt on JARVIS</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 02 Apr 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://jiaweisizzz.github.io/tags/chatgpt/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Vercel部署ChatGPT</title>
+      <link>https://jiaweisizzz.github.io/posts/vercal_chatgpt/</link>
+      <pubDate>Sun, 02 Apr 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://jiaweisizzz.github.io/posts/vercal_chatgpt/</guid>
+      <description>今天给大家推荐一个好玩并且实用的开源项目。最近很火的chatgpt想必大家都不陌生吧，功能非常强大，对于我们程序员来说，简直就是帮助我们开发</description>
+    </item>
+    
+  </channel>
+</rss>
