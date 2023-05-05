@@ -6,7 +6,16 @@
     <description>Recent content on JARVIS</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 02 Apr 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://jiaweisizzz.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 04 May 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://jiaweisizzz.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>如何对列表分页</title>
+      <link>https://jiaweisizzz.github.io/posts/list_page/</link>
+      <pubDate>Thu, 04 May 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://jiaweisizzz.github.io/posts/list_page/</guid>
+      <description>在大多数场景下，进入一个页面后显示的是一个数据的列表，列表的数据量大小不一，数据量太大一次请求全部返回，会给前端非常大的压力，导致页面卡顿，</description>
+    </item>
+    
     <item>
       <title>Vercel部署ChatGPT</title>
       <link>https://jiaweisizzz.github.io/posts/vercal_chatgpt/</link>
