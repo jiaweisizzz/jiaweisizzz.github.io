@@ -8,21 +8,21 @@
 
   
     
-  <title>Goland 远程开发 | JARVIS</title>
+  <title>软件的开发流程 | JARVIS</title>
   <meta name="author" content="jarvis">
-  <meta name="description" content="背景尽管go支持交叉编译，但是在特定情况下，例如CGO模式下不支持交叉编译，可能需要在服务器或者是其他的系统环境上编译并运行我们写的程序，但">
+  <meta name="description" content="软件开发不是英雄主义的体现，产品面向的对象是用户，用户的需求才是软件开发的驱动。产品是一个从0到1然后再迭代的过程，所以从无到有是最关键的一">
   <meta name="keywords" content="blog,developer,personal">
 
   <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Goland 远程开发"/>
-<meta name="twitter:description" content="背景尽管go支持交叉编译，但是在特定情况下，例如CGO模式下不支持交叉编译，可能需要在服务器或者是其他的系统环境上编译并运行我们写的程序，但"/>
+<meta name="twitter:title" content="软件的开发流程"/>
+<meta name="twitter:description" content="软件开发不是英雄主义的体现，产品面向的对象是用户，用户的需求才是软件开发的驱动。产品是一个从0到1然后再迭代的过程，所以从无到有是最关键的一"/>
 
-  <meta property="og:title" content="Goland 远程开发" />
-<meta property="og:description" content="背景尽管go支持交叉编译，但是在特定情况下，例如CGO模式下不支持交叉编译，可能需要在服务器或者是其他的系统环境上编译并运行我们写的程序，但" />
+  <meta property="og:title" content="软件的开发流程" />
+<meta property="og:description" content="软件开发不是英雄主义的体现，产品面向的对象是用户，用户的需求才是软件开发的驱动。产品是一个从0到1然后再迭代的过程，所以从无到有是最关键的一" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://jiaweisizzz.github.io/posts/goland_remote_connect/" /><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2023-03-24T00:00:00+00:00" />
-<meta property="article:modified_time" content="2023-03-24T00:00:00+00:00" />
+<meta property="og:url" content="https://jiaweisizzz.github.io/posts/product_development/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-05-05T00:00:00+00:00" />
+<meta property="article:modified_time" content="2023-05-05T00:00:00+00:00" />
 
   <link rel="stylesheet" href="/css/bootstrap.min.css"  crossorigin="anonymous">
   
@@ -168,7 +168,7 @@ if (!doNotTrack) {
 <style type="text/css">
   header.intro-header {
     position: relative;
-    background-image: url('/img/go_remote_connect/header.jpg');
+    background-image: url('/img/product_development/header.jpg');
   }
 </style>
 
@@ -181,16 +181,14 @@ if (!doNotTrack) {
         <div class="post-heading">
           <div class="tags">
             
-            <a class="tag" href="/tags/goland/" title="goland">goland</a>
-            
-            <a class="tag" href="/tags/remote/" title="remote">remote</a>
+            <a class="tag" href="/tags/product/" title="product">product</a>
             
           </div>
-          <h1>Goland 远程开发</h1>
-          <h2 class="subheading">工欲善其事 必先利其器</h2>
+          <h1>软件的开发流程</h1>
+          <h2 class="subheading">软件开发不是某个人拍桌子决定的</h2>
           <span class="meta">
             Posted by  jarvis 
-            on Fri, Mar 24, 2023
+            on Fri, May 5, 2023
           </span>
         </div>
       </div>
@@ -211,68 +209,63 @@ if (!doNotTrack) {
               col-lg-8 col-lg-offset-2
               col-md-10 col-md-offset-1
               post-container">
-        <h2 id="背景">背景<a class="anchorjs-link" href="#%e8%83%8c%e6%99%af"></a></h2><p>尽管go支持交叉编译，但是在特定情况下，例如CGO模式下不支持交叉编译，可能需要在服务器或者是其他的系统环境上编译并运行我们写的程序，但是每次都要在服务器之间进行拷贝传输，非常麻烦。例如最近我在测试项目的时候，需要在服务器上编译运行我的代码，所以每次在本地编写完代码后，都需要手动<code>scp</code>到目标服务器上，如果在服务器上运行报错，修复后还要重复同样的步骤，非常耗时而且不方便。</p>
-<h2 id="goland-remote-connect">goland remote connect<a class="anchorjs-link" href="#goland-remote-connect"></a></h2><p>接下来介绍一下使用goland的远程连接模式，那叫一个丝滑。</p>
-<p>首先打开goland设置，找到Deployment，也可以直接搜索Deployment，点击➕，选择SFTP，输入服务名称并创建。</p>
+        <p>软件开发不是英雄主义的体现，产品面向的对象是用户，用户的需求才是软件开发的驱动。产品是一个从0到1然后再迭代的过程，所以从无到有是最关键的一环。一个不完善的开发流程可能会导致周期长、产品烂、维护难等问题。</p>
+<p>你是否遇到这样的问题，某天你的领导说要做一个功能，口头给你描述了一下需求大概是什么样的，然后让你完成这个功能，然后你说有没有设计或者页面，领导说让你自己画一下先看一下。你回到工位后思来想去几天也没有头绪，到底我要做一个怎样的功能？页面我要怎样画？业务到底是什么样的？一连串的问题在脑海中飘过，终于鼓起勇气去跟领导询问，领导一脸无奈，这么简单的事情也要给你讲很多遍。这只是开始而已🤷🏻‍♂️。</p>
+<p>一个完整的开发流程包括：</p>
 <p><figure>
   <a class="paragraph-image">
-    <img data-src="img/1.png" data-action="zoom" alt=""  class="lazyload">
+    <img data-src="img/%e5%bc%80%e5%8f%91%e6%b5%81%e7%a8%8b.png" data-action="zoom" alt=""  class="lazyload">
   </a>
   
 </figure></p>
-<p>接下来配置SSH，输入目标服务器的地址、用户名和密码，点击<code>Test Connection</code> 可以测试连接，测试成功后连接就创建成功了，点击<code>OK</code>。</p>
-<p><figure>
-  <a class="paragraph-image">
-    <img data-src="img/2.png" data-action="zoom" alt=""  class="lazyload">
-  </a>
-  
-</figure></p>
-<p>配置我们服务器代码的位置，点击<code>Mappings</code>，Local path是我们本地的代码路径，Deployment path是我们远程服务器的代码路径。</p>
-<p><figure>
-  <a class="paragraph-image">
-    <img data-src="img/3.png" data-action="zoom" alt=""  class="lazyload">
-  </a>
-  
-</figure></p>
-<p>点击<code>OK</code>所有配置就结束了。接下来让我们测试一下是否生效，本地创建了一个test.go文件，打印“hello world!”。点击Goland菜单栏中的Tools &gt; Deployment，我们可以看到提示我们是否上传到我们配置好的服务器，当配置了多个服务器时，点击<code>Upload to...</code>可以选择我们想要的服务器，在这里我们点击 <code>Upload to test</code>，上传成功后会在左下角提示成功，从服务器上Download也是相同的操作。</p>
-<p><figure>
-  <a class="paragraph-image">
-    <img data-src="img/4.png" data-action="zoom" alt=""  class="lazyload">
-  </a>
-  
-</figure></p>
-<p><figure>
-  <a class="paragraph-image">
-    <img data-src="img/5.png" data-action="zoom" alt=""  class="lazyload">
-  </a>
-  
-</figure></p>
-<p>然后我们到目标服务器看到在我们配置的目录下出现了test.go文件，运行后输出 “hello world!”，到此就大功告成了。之后我们在本地修改代码后，只需要点击Upload就可以同步到服务器上。</p>
-<p><figure>
-  <a class="paragraph-image">
-    <img data-src="img/6.png" data-action="zoom" alt=""  class="lazyload">
-  </a>
-  
-</figure></p>
+<ol>
+<li>
+<p>需求的收集和评审</p>
+<p>需求在软件开发之前就要收集明确，避免产品研发的方便跑偏，需求明确后要由产品经理出具需求文档，然后开会进行需求评审，这个过程中所有相关的人员都要参与，包括产品经理、研发人员、测试、UI等。如果需求不合理则挂起需求或者由产品经理重新修改再次评审。</p>
+</li>
+<li>
+<p>原型设计和评审</p>
+<p>需求评审完成后由设计输出原型图，所有参与人再次进行原型评审，设计不合理再重新修改评审。</p>
+</li>
+<li>
+<p>开发资源的分配</p>
+<p>由leader决定这个功能由哪些研发人员参与。</p>
+</li>
+<li>
+<p>需求的讲解</p>
+<p>由产品和leader讲解需求，这是非常重要的一环，因为足够了解需求就可以了解业务，是一个非常好的学习机会，也会对功能更加清晰的认知，对后面的开发非常有帮助，这个环节如果有疑问的地方一定要提出来，会让自己和开发的软件都更加健壮。</p>
+</li>
+<li>
+<p>概要设计和UI设计以及评审</p>
+<p>研发人员了解了需求之后，就要写详细的概要设计，包括整体的逻辑，数据库的设计甚至某些重要的实现和函数（可以是伪代码）等。UI需要根据需求出具UI设计稿，后期前端的同学根据这个画页面。两个都需要所有参与人进行评审，评审通过后才可继续。</p>
+</li>
+<li>
+<p>开发ing</p>
+<p>前后端开发阶段，这个过程leader要把控进度和代码质量，防止错误的开发导致重复返工，开发完成后需要联调自测等。</p>
+</li>
+<li>
+<p>测试阶段</p>
+<p>功能提交给测试，进入bug收敛阶段。</p>
+</li>
+<li>
+<p>修改bug迭代</p>
+<p>修改bug，回归测试，交付验收。</p>
+</li>
+</ol>
+<h2 id="总结">总结<a class="anchorjs-link" href="#%e6%80%bb%e7%bb%93"></a></h2><p>软件开发不是闭门造车，相反我认为是一个庞大的工程，任何一个细节都可能会让一款产品失败，有时候失败的定义不是说产品卖的不好， 而是明明可以更好确选择了“就这样”。</p>
+<p>要做一个<em><strong>软件工程师</strong></em>而不是一个***<del>码农</del>***。</p>
 
 
         <hr style="visibility: hidden;" />
         <ul class="pager">
           
           <li class="previous">
-            <a href="/posts/go_clickhouse%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/" data-toggle="tooltip" data-placement="top" title="主流的golang clickhouse客户端写入性能测试">
+            <a href="/posts/list_page/" data-toggle="tooltip" data-placement="top" title="如何对列表分页">
               Previous<br>
-              <span>主流的golang clickhouse客户端写入性能测试</span>
+              <span>如何对列表分页</span>
             </a>
           </li>
           
-          
-          <li class="next">
-            <a href="/posts/go_tensorflow/" data-toggle="tooltip" data-placement="top" title="Golang TensorFlow">
-              Next<br>
-              <span>Golang TensorFlow</span>
-            </a>
-          </li>
           
         </ul>
         <hr style="visibility: hidden;" />

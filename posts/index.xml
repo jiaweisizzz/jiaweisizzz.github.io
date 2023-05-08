@@ -6,7 +6,16 @@
     <description>Recent content in Posts on JARVIS</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Thu, 04 May 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://jiaweisizzz.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 05 May 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://jiaweisizzz.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>软件的开发流程</title>
+      <link>https://jiaweisizzz.github.io/posts/product_development/</link>
+      <pubDate>Fri, 05 May 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://jiaweisizzz.github.io/posts/product_development/</guid>
+      <description>软件开发不是英雄主义的体现，产品面向的对象是用户，用户的需求才是软件开发的驱动。产品是一个从0到1然后再迭代的过程，所以从无到有是最关键的一</description>
+    </item>
+    
     <item>
       <title>如何对列表分页</title>
       <link>https://jiaweisizzz.github.io/posts/list_page/</link>
