@@ -2,23 +2,29 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://jiaweisizzz.github.io/tags/golang/</loc>
+    <lastmod>2023-05-22T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://jiaweisizzz.github.io/tags/gorm/</loc>
+    <lastmod>2023-05-22T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>https://jiaweisizzz.github.io/</loc>
-    <lastmod>2023-05-05T00:00:00+00:00</lastmod>
+    <lastmod>2023-05-22T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://jiaweisizzz.github.io/posts/</loc>
-    <lastmod>2023-05-05T00:00:00+00:00</lastmod>
+    <lastmod>2023-05-22T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://jiaweisizzz.github.io/tags/</loc>
+    <lastmod>2023-05-22T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://jiaweisizzz.github.io/posts/gorm_transaction/</loc>
+    <lastmod>2023-05-22T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://jiaweisizzz.github.io/tags/product/</loc>
     <lastmod>2023-05-05T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://jiaweisizzz.github.io/tags/</loc>
-    <lastmod>2023-05-05T00:00:00+00:00</lastmod>
-  </url><url>
     <loc>https://jiaweisizzz.github.io/posts/product_development/</loc>
     <lastmod>2023-05-05T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://jiaweisizzz.github.io/tags/golang/</loc>
-    <lastmod>2023-05-04T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://jiaweisizzz.github.io/posts/list_page/</loc>
     <lastmod>2023-05-04T00:00:00+00:00</lastmod>
