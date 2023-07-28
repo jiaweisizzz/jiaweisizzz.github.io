@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>build on JARVIS</title>
+    <link>https://jiaweisizzz.github.io/tags/build/</link>
+    <description>Recent content in build on JARVIS</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Fri, 28 Jul 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://jiaweisizzz.github.io/tags/build/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>GO交叉编译</title>
+      <link>https://jiaweisizzz.github.io/posts/go_cross_build/</link>
+      <pubDate>Fri, 28 Jul 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://jiaweisizzz.github.io/posts/go_cross_build/</guid>
+      <description>交叉编译Go语言支持交叉编译，这意味着您可以在一个操作系统上构建用于另一个操作系统的可执行程序。交叉编译非常有用，特别是当您想在不同的平台上</description>
+    </item>
+    
+  </channel>
+</rss>

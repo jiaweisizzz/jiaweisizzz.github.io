@@ -6,7 +6,16 @@
     <description>Recent content on JARVIS</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 22 May 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://jiaweisizzz.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 28 Jul 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://jiaweisizzz.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>GO交叉编译</title>
+      <link>https://jiaweisizzz.github.io/posts/go_cross_build/</link>
+      <pubDate>Fri, 28 Jul 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://jiaweisizzz.github.io/posts/go_cross_build/</guid>
+      <description>交叉编译Go语言支持交叉编译，这意味着您可以在一个操作系统上构建用于另一个操作系统的可执行程序。交叉编译非常有用，特别是当您想在不同的平台上</description>
+    </item>
+    
     <item>
       <title>优雅封装事务</title>
       <link>https://jiaweisizzz.github.io/posts/gorm_transaction/</link>
