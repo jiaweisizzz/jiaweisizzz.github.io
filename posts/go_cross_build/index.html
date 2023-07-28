@@ -213,13 +213,17 @@ if (!doNotTrack) {
               post-container">
         <h2 id="交叉编译">交叉编译<a class="anchorjs-link" href="#%e4%ba%a4%e5%8f%89%e7%bc%96%e8%af%91"></a></h2><p>Go语言支持交叉编译，这意味着您可以在一个操作系统上构建用于另一个操作系统的可执行程序。交叉编译非常有用，特别是当您想在不同的平台上构建和部署应用程序时。</p>
 <ol>
-<li>设置Go编译器路径：首先，确保您已经正确安装了Go，并将Go编译器添加到系统路径中，以便在命令行中使用<code>go</code>命令。</li>
-<li>设置环境变量：在进行交叉编译之前，需要设置<code>GOOS</code>和<code>GOARCH</code>环境变量，以指定目标平台的操作系统和架构，例如：</li>
-</ol>
+<li>
+<p>设置Go编译器路径：首先，确保您已经正确安装了Go，并将Go编译器添加到系统路径中，以便在命令行中使用<code>go</code>命令。</p>
+</li>
+<li>
+<p>设置环境变量：在进行交叉编译之前，需要设置<code>GOOS</code>和<code>GOARCH</code>环境变量，以指定目标平台的操作系统和架构，例如：</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span><span style="color:#8be9fd;font-style:italic">$GOOS</span><span style="color:#ff79c6">=</span>linux <span style="color:#8be9fd;font-style:italic">GOARCH</span><span style="color:#ff79c6">=</span>amd64 go build -o app-linux-amd64
 </span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>GOARCH：编译目标平台的硬件体系架构（amd64, 386, arm, ppc64等）
 </span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>GOOS：编译目标平台上的操作系统（darwin, freebsd, linux, windows）
-</span></span></code></pre></div><p>具体go支持哪些操作系统或架构可以参考：<a href="https://gist.github.com/asukakenji/f15ba7e588ac42795f421b48b8aede63" target="_blank">Go (Golang) GOOS and GOARCH</a></p>
+</span></span></code></pre></div></li>
+</ol>
+<p>具体go支持哪些操作系统或架构可以参考：<a href="https://gist.github.com/asukakenji/f15ba7e588ac42795f421b48b8aede63" target="_blank">Go (Golang) GOOS and GOARCH</a></p>
 <ol start="3">
 <li>
 <p>命名规范</p>
