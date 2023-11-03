@@ -6,7 +6,16 @@
     <description>Recent content on JARVIS</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 28 Jul 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://jiaweisizzz.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 02 Nov 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://jiaweisizzz.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Linux配置sftp</title>
+      <link>https://jiaweisizzz.github.io/posts/sftp/</link>
+      <pubDate>Thu, 02 Nov 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://jiaweisizzz.github.io/posts/sftp/</guid>
+      <description>创建sftp跟目录假如我们用/data目录来作为数据目录，在此创建/data/sftp_data为sftp的跟目录。 1mkdir /data/sftp_data 创建组因为有多个sf</description>
+    </item>
+    
     <item>
       <title>GO交叉编译</title>
       <link>https://jiaweisizzz.github.io/posts/go_cross_build/</link>
